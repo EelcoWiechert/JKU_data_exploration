@@ -13,32 +13,43 @@
 <select id="event_select">
   <option value=2005>2005</option>
   <option value=2006>2006</option>
+  <option value=2007>2007</option>
+  <option value=2008>2008</option>
+  <option value=2009>2009</option>
+  <option value=2010>2010</option>
+  <option value=2011>2011</option>
+  <option value=2012>2012</option>
+  <option value=2013>2013</option>
+  <option value=2014>2014</option>
+  <option value=2015>2015</option>
+  <option value=2016>2016</option>
 </select>
 <button type="button" onclick="show_events();">Show</button>
 
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
 
 <script>
 
-// Returns the ISO week of the date.
-Date.prototype.getWeek = function() {
-  var date = new Date(this.getTime());
-   date.setHours(0, 0, 0, 0);
-  // Thursday in current week decides the year.
-  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-  // January 4 is always in week 1.
-  var week1 = new Date(date.getFullYear(), 0, 4);
-  // Adjust to Thursday in week 1 and count number of weeks from date to week1.
-  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000
-                        - 3 + (week1.getDay() + 6) % 7) / 7);
+Date.prototype.getWeekNumber = function(){
+  var d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate()));
+  var dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1)/7)
+};
+
+function checkWeek(date) {
+  var m = moment(date, 'YYYY-MM-DD');
+  return m.toDate().getWeekNumber();
 }
 
 </script>
 
 <script>
 
-var margin = {top: 50, right: 150, bottom: 50, left: 50}
+var margin = {top: 100, right: 150, bottom: 50, left: 50}
   , width = window.innerWidth - margin.left - margin.right // Use the window's width
   , height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
 
@@ -181,27 +192,63 @@ function plot_lines(data_to_plot){
       // get info
       events = document.getElementById("event_select").value;
 
-      console.log(events);
-      console.log((2017/02/05).getWeekYear());
+    //
+    d3.csv("/data/events.csv", function(events_raw) {
+      console.log(events_raw[0]);
+      events_raw_filtered = events_raw.filter(function (d) {
+        return d.year == events;
+      });
 
-      d3.csv("data/events.csv". function(events))  {
-        events_filtered = events.filter(function(d) {
-          return d.year == 2005;
-        });
+    // Update events
+    svg.selectAll(".event_lines")
+      .data(events_raw_filtered)
+      .attr("x1", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
+      .attr("y1", y(0))
+      .attr("x2", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
+      .attr("y2", y(y_max));
 
-        // Enter lines
-        svg.selectAll(".event_lines")
-          .data(events_filtered)
-          .enter().append("line")
-          .attr("class", "event_lines")
-          .style("fill", "none")
-          .style("stroke", "black")  // colour the line
-          .attr("x1", 100)     // x position of the first end of the line
-          .attr("y1", 0)      // y position of the first end of the line
-          .attr("x2", 300)     // x position of the second end of the line
-          .attr("y2", y_max);    // y position of the second end of the line
 
-      };
+    // Enter events
+    svg.selectAll(".event_lines")
+      .data(events_raw_filtered)
+      .enter().append("line")
+      .attr("class", "event_lines")
+      .style("fill", "none")
+      .style("stroke", "black")
+      .attr("x1", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
+      .attr("y1", y(0))
+      .attr("x2", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
+      .attr("y2", y(y_max));
+
+    // Exit events
+    svg.selectAll(".event_lines")
+      .data(events_raw_filtered)
+      .exit().remove()
+
+    // Update events
+    svg.selectAll(".event_text")
+      .data(events_raw_filtered)
+      .attr("x", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
+      .attr("y", y(y_max));
+
+    // Enter events
+    svg.selectAll(".event_text")
+      .data(events_raw_filtered)
+      .enter().append("text")
+      .attr("class", "event_text")
+      .attr("x", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
+      .attr("y", y(y_max))
+      .text( function (d) { return d.description })
+      .attr("font-family", "sans-serif")
+      .attr("font-size", "6px")
+      .attr("fill", "grey");
+
+    // Exit events
+    svg.selectAll(".event_text")
+      .data(events_raw_filtered)
+      .exit().remove()
+
+    });
 
     };
 
