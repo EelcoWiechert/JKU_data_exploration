@@ -3,29 +3,73 @@
 </head>
 
 <body>
+<div>
+  <select id="country_select">
+    <option value="UK">United Kingdom</option>
+    <option value="US">United States</option>
+  </select>
 
-<select id="country_select">
-  <option value="UK">United Kingdom</option>
-  <option value="US">United States</option>
-</select>
-<button type="button" onclick="show_countries();">Show</button>
+  <select id="genre_select">
+    <option value="rnb">Pop</option>
+    <option value="rap">Rock</option>
+    <option value="electronic">Pop</option>
+    <option value="rock">Rock</option>
+    <option value="new age">Pop</option>
+    <option value="classical">Rock</option>
+    <option value="reggae">Pop</option>
+    <option value="blues">Rock</option>
+    <option value="country">Pop</option>
+    <option value="world">Rock</option>
+    <option value="folk">Pop</option>
+    <option value="easy listening">Rock</option>
+    <option value="jazz">Pop</option>
+    <option value="vocal">Rock</option>
+    <option value="children's">Pop</option>
+    <option value="punk">Rock</option>
+    <option value="alternative">Pop</option>
+    <option value="heavy metal">Rock</option>
+    <option value="spoken word">Pop</option>
+    <option value="pop">Rock</option>
+  </select>
 
-<select id="event_select">
-  <option value=2005>2005</option>
-  <option value=2006>2006</option>
-  <option value=2007>2007</option>
-  <option value=2008>2008</option>
-  <option value=2009>2009</option>
-  <option value=2010>2010</option>
-  <option value=2011>2011</option>
-  <option value=2012>2012</option>
-  <option value=2013>2013</option>
-  <option value=2014>2014</option>
-  <option value=2015>2015</option>
-  <option value=2016>2016</option>
-</select>
-<button type="button" onclick="show_events();">Show</button>
+  <select id="year_select">
+    <option value=2005>2005</option>
+    <option value=2006>2006</option>
+    <option value=2007>2007</option>
+    <option value=2008>2008</option>
+    <option value=2009>2009</option>
+    <option value=2010>2010</option>
+    <option value=2011>2011</option>
+    <option value=2012>2012</option>
+    <option value=2013>2013</option>
+    <option value=2014>2014</option>
+    <option value=2015>2015</option>
+    <option value=2016>2016</option>
+  </select>
 
+  <button type="button" onclick="show_countries();">Show</button>
+
+</div>
+
+<div>
+  Events
+  
+  <select id="event_select">
+    <option value=2005>2005</option>
+    <option value=2006>2006</option>
+    <option value=2007>2007</option>
+    <option value=2008>2008</option>
+    <option value=2009>2009</option>
+    <option value=2010>2010</option>
+    <option value=2011>2011</option>
+    <option value=2012>2012</option>
+    <option value=2013>2013</option>
+    <option value=2014>2014</option>
+    <option value=2015>2015</option>
+    <option value=2016>2016</option>
+  </select>
+  <button type="button" onclick="show_events();">Show</button>
+</div>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
@@ -49,7 +93,7 @@ function checkWeek(date) {
 
 <script>
 
-var margin = {top: 100, right: 150, bottom: 50, left: 50}
+var margin = {top: 50, right: 150, bottom: 50, left: 50}
   , width = window.innerWidth - margin.left - margin.right // Use the window's width
   , height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
 
@@ -92,12 +136,14 @@ var margin = {top: 100, right: 150, bottom: 50, left: 50}
 
     // get info
     country = document.getElementById("country_select").value;
+    genre = document.getElementById("genre_select").value;
+    year = document.getElementById("year_select").value;
 
     d3.json("/data/data.json", function(data) {
       data_filtered = data.filter(function (d) {
         return  d.country == country &&
-                d.genre == 'pop' &&
-                d.year == '2005';
+                d.genre == genre &&
+                d.year == year;
       });
 
       data_filtered_sorted = data_filtered.sort(function(a, b) {
@@ -109,11 +155,9 @@ var margin = {top: 100, right: 150, bottom: 50, left: 50}
 
            y_max = d3.max(data_filtered, function(d) {
      	       return Math.max(d.playcount); })
-
       };
 
       data_to_plot.push(data_filtered_sorted);
-
       plot_lines(data_to_plot);
 
     })
@@ -177,7 +221,10 @@ function plot_lines(data_to_plot){
         .attr('x', width + 20)
         .attr('y', function(d, i) {return (i * 20) + 9;})
         .text(function(d) {return (d[0].year + " - " + d[0].country + " - " + d[0].genre);})
-        .attr('fill', 'black');
+        .attr('fill', 'black')
+        .attr("font-family", "sans-serif")
+        .attr("font-size", "12px")
+        .attr("fill", "black");
 
       // Exit legend
       svg.selectAll('.legend')
@@ -206,7 +253,6 @@ function plot_lines(data_to_plot){
       .attr("y1", y(0))
       .attr("x2", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
       .attr("y2", y(y_max));
-
 
     // Enter events
     svg.selectAll(".event_lines")
@@ -247,14 +293,11 @@ function plot_lines(data_to_plot){
     svg.selectAll(".event_text")
       .data(events_raw_filtered)
       .exit().remove()
-
     });
 
     };
-
 </script>
 
 </body>
-
 
 </html
