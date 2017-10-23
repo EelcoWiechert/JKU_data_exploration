@@ -21,6 +21,23 @@
 
 <script>
 
+// Returns the ISO week of the date.
+Date.prototype.getWeek = function() {
+  var date = new Date(this.getTime());
+   date.setHours(0, 0, 0, 0);
+  // Thursday in current week decides the year.
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  // January 4 is always in week 1.
+  var week1 = new Date(date.getFullYear(), 0, 4);
+  // Adjust to Thursday in week 1 and count number of weeks from date to week1.
+  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000
+                        - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+
+</script>
+
+<script>
+
 var margin = {top: 50, right: 150, bottom: 50, left: 50}
   , width = window.innerWidth - margin.left - margin.right // Use the window's width
   , height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
@@ -64,11 +81,8 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
 
     // get info
     country = document.getElementById("country_select").value;
-    console.log(country);
 
     d3.json("/data/data.json", function(data) {
-      console.log(data[0]);
-
       data_filtered = data.filter(function (d) {
         return  d.country == country &&
                 d.genre == 'pop' &&
@@ -89,9 +103,8 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
 
       data_to_plot.push(data_filtered_sorted);
 
-      console.log(data_to_plot);
+      plot_lines(data_to_plot);
 
-      plot_lines(data_to_plot)
     })
   };
 
@@ -162,6 +175,35 @@ function plot_lines(data_to_plot){
     };
 
     // Enter events
+    // When user clicks show country button
+    function show_events() {
+
+      // get info
+      events = document.getElementById("event_select").value;
+
+      console.log(events);
+      console.log((2017/02/05).getWeekYear());
+
+      d3.csv("data/events.csv". function(events))  {
+        events_filtered = events.filter(function(d) {
+          return d.year == 2005;
+        });
+
+        // Enter lines
+        svg.selectAll(".event_lines")
+          .data(events_filtered)
+          .enter().append("line")
+          .attr("class", "event_lines")
+          .style("fill", "none")
+          .style("stroke", "black")  // colour the line
+          .attr("x1", 100)     // x position of the first end of the line
+          .attr("y1", 0)      // y position of the first end of the line
+          .attr("x2", 300)     // x position of the second end of the line
+          .attr("y2", y_max);    // y position of the second end of the line
+
+      };
+
+    };
 
 </script>
 
