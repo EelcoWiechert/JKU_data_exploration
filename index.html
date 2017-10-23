@@ -10,6 +10,12 @@
 </select>
 <button type="button" onclick="show_countries();">Show</button>
 
+<select id="event_select">
+  <option value=2005>2005</option>
+  <option value=2006>2006</option>
+</select>
+<button type="button" onclick="show_events();">Show</button>
+
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 
@@ -44,7 +50,8 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
     .call(d3.axisLeft(y));
 
   var data_to_plot = [];
-  var y_max = 0
+  var y_max = 0;
+  var color = ["#377eb8","#4daf4a","#984ea3","#e41a1c","#ff7f00","#a65628"];
 
   // linedraw function
   var line = d3.line()
@@ -84,6 +91,12 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
 
       console.log(data_to_plot);
 
+      plot_lines(data_to_plot)
+    })
+  };
+
+function plot_lines(data_to_plot){
+
       // change axis
       x.domain([1,53])
       y.domain([0,y_max]);
@@ -94,6 +107,7 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
       // Update lines
       svg.selectAll(".pc_lines")
         .data(data_to_plot)
+        .attr("stroke", function (d, i) { return color[i]; })
         .attr("d", line);
 
       // Enter lines
@@ -101,6 +115,8 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
         .data(data_to_plot)
         .enter().append("path")
         .attr("class", "pc_lines")
+        .style("fill", "none")
+        .attr("stroke", function (d, i) { return color[i]; })
         .attr("d", line);
 
       // Exit lines
@@ -108,7 +124,12 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
         .data(data_to_plot)
         .exit().remove();
 
-      //
+      // Update legend
+      svg.selectAll('.legend')
+        .data(data_to_plot)
+        .attr('fill', function (d, i) { return color[i]; })
+
+      // Enter legend
       var legend = svg.selectAll('.legend')
         .data(data_to_plot)
         .enter().append('g')
@@ -121,20 +142,26 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
         })
         .attr('width', 10)
         .attr('height', 10)
-        .style('fill', 'black');
-
+        .attr('fill', function (d, i) { return color[i]; })
+        .on("click", function(d,i) {
+          console.log(i);
+          data_to_plot.splice(i, 1);
+          plot_lines(data_to_plot);
+        });
 
       legend.append('text')
         .attr('x', width + 20)
-        .attr('y', function(d, i) {
-          return (i * 20) + 9;
-        })
-        .text(function(d) {
-          return (d[0].year + " - " + d[0].country + " - " + d[0].genre);
-        });
+        .attr('y', function(d, i) {return (i * 20) + 9;})
+        .text(function(d) {return (d[0].year + " - " + d[0].country + " - " + d[0].genre);})
+        .attr('fill', 'black');
 
-    });
-  };
+      // Exit legend
+      svg.selectAll('.legend')
+        .data(data_to_plot)
+        .exit().remove();
+    };
+
+    // Enter events
 
 </script>
 
