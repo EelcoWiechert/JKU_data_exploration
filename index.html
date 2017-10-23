@@ -15,7 +15,7 @@
 
 <script>
 
-var margin = {top: 50, right: 50, bottom: 50, left: 50}
+var margin = {top: 50, right: 150, bottom: 50, left: 50}
   , width = window.innerWidth - margin.left - margin.right // Use the window's width
   , height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
 
@@ -109,35 +109,33 @@ var margin = {top: 50, right: 50, bottom: 50, left: 50}
         .exit().remove();
 
       //
-      var legend = svg.selectAll('g')
+      var legend = svg.selectAll('.legend')
         .data(data_to_plot)
-        .enter()
-        .append('g')
+        .enter().append('g')
         .attr('class', 'legend');
 
       legend.append('rect')
-        .attr('x', width - 20)
+        .attr('x', width)
         .attr('y', function(d, i) {
           return i * 20;
         })
         .attr('width', 10)
         .attr('height', 10)
-        .style('fill', function(d) {
-          return color(d.name);
+        .style('fill', 'black');
+
+
+      legend.append('text')
+        .attr('x', width + 20)
+        .attr('y', function(d, i) {
+          return (i * 20) + 9;
+        })
+        .text(function(d) {
+          return (d[0].year + " - " + d[0].country + " - " + d[0].genre);
         });
 
-    legend.append('text')
-      .attr('x', width - 8)
-      .attr('y', function(d, i) {
-        return (i * 20) + 9;
-      })
-      .text(function(d) {
-        return d.name;
-      });
     });
+  };
 
-
-  }
 </script>
 
 </body>
