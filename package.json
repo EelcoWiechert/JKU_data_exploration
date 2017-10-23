@@ -1,0 +1,19 @@
+{
+  "name": "data_exploration",
+  "version": "1.0.0",
+  "scripts": {
+    "serve": "http-server -p9999"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EelcoWiechert/JKU2017_music_events_impact.git"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "d3": "4.8.0",
+    "d3-svg-annotation": "^1.17.1",
+    "http-server": "0.10.0",
+    "nouislider": "^10.0.0",
+    "wnumb": "^1.1.0"
+  }
+}
