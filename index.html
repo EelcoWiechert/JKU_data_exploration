@@ -11,19 +11,10 @@
 <button type="button" onclick="show_countries();">Show</button>
 
 
-<script>
-  function show_countries() {
-    console.log(document.getElementById("country_select").value);
-
-  }
-
-</script>
-
 <script src="https://d3js.org/d3.v4.min.js"></script>
 
 <script>
 
-// 2. Use the margin convention practice
 var margin = {top: 50, right: 50, bottom: 50, left: 50}
   , width = window.innerWidth - margin.left - margin.right // Use the window's width
   , height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
@@ -31,6 +22,9 @@ var margin = {top: 50, right: 50, bottom: 50, left: 50}
   // set the ranges
   var x = d3.scaleLinear().range([0, width]);
   var y = d3.scaleLinear().range([height, 0]);
+
+  x.domain([1,53]);
+  y.domain([0,1]);
 
   var svg = d3.select("body").append("svg")
       .attr("width", width + margin.left + margin.right)
@@ -46,7 +40,104 @@ var margin = {top: 50, right: 50, bottom: 50, left: 50}
 
   // Add the Y Axis
   svg.append("g")
+    .attr("class", "y_axis")
     .call(d3.axisLeft(y));
+
+  var data_to_plot = [];
+  var y_max = 0
+
+  // linedraw function
+  var line = d3.line()
+      .x(function(d) {return x(d.week);})
+      .y(function(d) {return y(d.playcount);
+      });
+
+  // When user clicks show country button
+  function show_countries() {
+
+    // get info
+    country = document.getElementById("country_select").value;
+    console.log(country);
+
+    d3.json("/data/data.json", function(data) {
+      console.log(data[0]);
+
+      data_filtered = data.filter(function (d) {
+        return  d.country == country &&
+                d.genre == 'pop' &&
+                d.year == '2005';
+      });
+
+      data_filtered_sorted = data_filtered.sort(function(a, b) {
+          return parseFloat(a.week) - parseFloat(b.week);
+      });
+
+      if (y_max < d3.max(data_filtered, function(d) {
+	       return Math.max(d.playcount); })){
+
+           y_max = d3.max(data_filtered, function(d) {
+     	       return Math.max(d.playcount); })
+
+      };
+
+      data_to_plot.push(data_filtered_sorted);
+
+      console.log(data_to_plot);
+
+      // change axis
+      x.domain([1,53])
+      y.domain([0,y_max]);
+
+      svg.selectAll(".y_axis")
+        .call(d3.axisLeft(y));
+
+      // Update lines
+      svg.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .attr("d", line);
+
+      // Enter lines
+      svg.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .enter().append("path")
+        .attr("class", "pc_lines")
+        .attr("d", line);
+
+      // Exit lines
+      svg.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .exit().remove();
+
+      //
+      var legend = svg.selectAll('g')
+        .data(data_to_plot)
+        .enter()
+        .append('g')
+        .attr('class', 'legend');
+
+      legend.append('rect')
+        .attr('x', width - 20)
+        .attr('y', function(d, i) {
+          return i * 20;
+        })
+        .attr('width', 10)
+        .attr('height', 10)
+        .style('fill', function(d) {
+          return color(d.name);
+        });
+
+    legend.append('text')
+      .attr('x', width - 8)
+      .attr('y', function(d, i) {
+        return (i * 20) + 9;
+      })
+      .text(function(d) {
+        return d.name;
+      });
+    });
+
+
+  }
 </script>
 
 </body>
