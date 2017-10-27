@@ -3,6 +3,50 @@
 </head>
 
 <body>
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .horizon {
+        border-top: solid 1px #000;
+        border-bottom: solid 1px #000;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .horizon + .horizon {
+        border-top: none;
+    }
+
+    .horizon canvas {
+        display: block;
+        image-rendering: pixelated;
+    }
+
+  .horizon .title,
+  .horizon .value {
+      bottom: 0;
+      line-height: 30px;
+      margin: 0 6px;
+      position: absolute;
+      font-family: sans-serif;
+      text-shadow: 0 1px 0 rgba(255,255,255,.5);
+      white-space: nowrap;
+  }
+
+  .horizon .title {
+      left: 0;
+  }
+
+  .horizon .value {
+      right: 0;
+  }
+
+</style>
+
 <div>
   <select id="country_select">
     <option value="UK">United Kingdom</option>
@@ -26,26 +70,26 @@
   </select>
 
   <select id="genre_select">
-    <option value="rnb">Pop</option>
-    <option value="rap">Rock</option>
-    <option value="electronic">Pop</option>
+    <option value="rnb">RnB</option>
+    <option value="rap">Rap</option>
+    <option value="electronic">Electronic</option>
     <option value="rock">Rock</option>
-    <option value="new age">Pop</option>
-    <option value="classical">Rock</option>
-    <option value="reggae">Pop</option>
-    <option value="blues">Rock</option>
-    <option value="country">Pop</option>
-    <option value="world">Rock</option>
-    <option value="folk">Pop</option>
-    <option value="easy listening">Rock</option>
-    <option value="jazz">Pop</option>
-    <option value="vocal">Rock</option>
-    <option value="children's">Pop</option>
-    <option value="punk">Rock</option>
-    <option value="alternative">Pop</option>
-    <option value="heavy metal">Rock</option>
-    <option value="spoken word">Pop</option>
-    <option value="pop">Rock</option>
+    <option value="new age">New Age</option>
+    <option value="classical">Classical</option>
+    <option value="reggae">Reggae</option>
+    <option value="blues">Blues</option>
+    <option value="country">Country</option>
+    <option value="world">World</option>
+    <option value="folk">Folk</option>
+    <option value="easy listening">Easy listening</option>
+    <option value="jazz">Jazz</option>
+    <option value="vocal">Vocal</option>
+    <option value="children's">Children's</option>
+    <option value="punk">Punk</option>
+    <option value="alternative">Alternative</option>
+    <option value="heavy metal">Heavy Metal</option>
+    <option value="spoken word">Spoken Word</option>
+    <option value="pop">Pop</option>
   </select>
 
   <select id="year_select">
@@ -144,7 +188,7 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
   // linedraw function
   var line = d3.line()
       .x(function(d) {return x(d.week);})
-      .y(function(d) {return y(d.playcount);
+      .y(function(d) {return y(d.relative_play);
       });
 
   // When user clicks show country button
@@ -167,14 +211,15 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
       });
 
       if (y_max < d3.max(data_filtered, function(d) {
-	       return Math.max(d.playcount); })){
+	       return Math.max(d.relative_play); })){
 
            y_max = d3.max(data_filtered, function(d) {
-     	       return Math.max(d.playcount); })
+     	       return Math.max(d.relative_play); })
       };
 
       data_to_plot.push(data_filtered_sorted);
       plot_lines(data_to_plot);
+      hor_chart(data_to_plot);
 
     })
   };
@@ -314,7 +359,61 @@ function plot_lines(data_to_plot){
     };
 </script>
 
+<script src="https://npmcdn.com/d3-horizon-chart/build/d3-horizon-chart.min.js"></script>
 
+<script>
+
+function hor_chart(line_list){
+
+  var series =[]
+
+  // generate some random data
+  line_list.forEach(function(serie) {
+
+
+
+    var temp_list = [];
+
+    // generate some random data
+    serie.forEach(function(d, i) {
+
+      for (var j = 0; j<16; j++) {
+        temp_list.push(d.relative_play); // only positive values
+      };
+
+    });
+
+    var list = {year:serie[0].year, genre:serie[0].genre, country:serie[0].country, data:temp_list};
+
+    series.push(list)
+
+  });
+
+    var horizonChart = d3.horizonChart();
+    // 4-band horizon (4 negative & 4 positive bands)
+    var colors = ['#313695', '#4575b4', '#74add1', '#abd9e9', '#fee090', '#fdae61', '#f46d43', '#d73027'];
+    var n = colors.length / 2;
+
+    var horizons = d3.select('body').selectAll('.horizon')
+        .data(series)
+        .enter().append('div')
+        .attr('class', 'horizon')
+        .each(function(d, i) {
+            horizonChart.colors(colors)
+                .height(40)
+                .title(d.year + ' - ' + d.genre + ' - ' + d.country)
+                .call(this, d.data);
+        });
+
+
+  }
+
+</script>
+
+<script>
+
+
+</script>
 
 
 </body>
