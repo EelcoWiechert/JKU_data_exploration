@@ -53,8 +53,8 @@
     <option value="PL">Poland</option>
     <option value="US">United States</option>
     <option value="RU">Russia</option>
-    <option value="DE">Denmark</option>
-    <option value="BR">Brasil</option>
+    <option value="DE">Germany</option>
+    <!--<option value="BR">Brasil</option>
     <option value="FI">Finland</option>
     <option value="SE">Sweden</option>
     <option value="NL">Netherlands</option>
@@ -66,7 +66,7 @@
     <option value="NO">Norway</option>
     <option value="IT">Italy</option>
     <option value="JP">Japan</option>
-    <option value="CZ">Czech Republic</option>
+    <option value="CZ">Czech Republic</option>-->
   </select>
 
   <select id="genre_select">
@@ -115,10 +115,10 @@
   Events
 
   <select id="event_select">
-    <option value=2005>2005</option>
-    <option value=2006>2006</option>
-    <option value=2007>2007</option>
-    <option value=2008>2008</option>
+    <option value=popular>Popular</option>
+    <option value=news>News</option>
+    <option value=tech>Technology</option>
+    <!--<option value=2008>2008</option>
     <option value=2009>2009</option>
     <option value=2010>2010</option>
     <option value=2011>2011</option>
@@ -126,7 +126,7 @@
     <option value=2013>2013</option>
     <option value=2014>2014</option>
     <option value=2015>2015</option>
-    <option value=2016>2016</option>
+    <option value=2016>2016</option>-->
   </select>
   <button type="button" onclick="show_events();">Show</button>
 </div>
@@ -136,59 +136,113 @@
 
 <script>
 
-Date.prototype.getWeekNumber = function(){
-  var d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate()));
-  var dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-  return Math.ceil((((d - yearStart) / 86400000) + 1)/7)
-};
-
-function checkWeek(date) {
-  var m = moment(date, 'YYYY-MM-DD');
-  return m.toDate().getWeekNumber();
-}
-
-</script>
-
-<script>
-
-var margin = {top: 50, right: 150, bottom: 50, left: 50}
+var margin = {top: 10, right: 150, bottom: 20, left: 50}
   , width = window.innerWidth - margin.left - margin.right // Use the window's width
-  , height = window.innerHeight - margin.top - margin.bottom; // Use the window's height
+  , height = (window.innerWidth/8) - margin.top - margin.bottom; // Use the window's height
+
+var parseTime = d3.timeParse("%Y-%m-%d");
 
   // set the ranges
-  var x = d3.scaleLinear().range([0, width]);
+  var x = d3.scaleTime().range([0, width]);
   var y = d3.scaleLinear().range([height, 0]);
 
-  x.domain([1,53]);
+  x.domain([parseTime("2005-01-01"), parseTime("2005-01-02")]);
   y.domain([0,1]);
 
-  var svg = d3.select("body").append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-      .attr("transform",
-            "translate(" + margin.left + "," + margin.top + ")");
+  var x_trend = d3.scaleTime().range([0, width]);
+  var y_trend = d3.scaleLinear().range([height, 0]);
 
+  x_trend.domain([parseTime("2005-01-03"), parseTime("2005-01-04")]);
+  y_trend.domain([0,1]);
+
+  var x_seasonal = d3.scaleTime().range([0, width]);
+  var y_seasonal = d3.scaleLinear().range([height, 0]);
+
+  x_seasonal.domain([parseTime("2005-01-03"), parseTime("2005-01-04")]);
+  y_seasonal.domain([0,1]);
+
+  var x_residual = d3.scaleTime().range([0, width]);
+  var y_residual = d3.scaleLinear().range([height, 0]);
+
+  x_residual.domain([parseTime("2005-01-03"), parseTime("2005-01-04")]);
+  y_residual.domain([0,1]);
+
+  function create_svg(){
+    return d3.select("body").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+  };
+
+  var original_chart = create_svg()
+  var trend_chart = create_svg()
+  var seasonal_chart = create_svg()
+  var residual_chart = create_svg()
+
+  function add_x_axis(chartname, name){
+    return chartname.append("g")
+              .attr("class", "x_axis")
+              .attr("transform", "translate(0," + height + ")")
+              .call(d3.axisBottom(name));
+  }
+
+  function add_y_axis(chartname, name) {
+    return chartname.append("g")
+      .attr("class", "y_axis")
+      .call(d3.axisLeft(name));
+  }
   // Add the X Axis
-  svg.append("g")
-    .attr("transform", "translate(0," + height + ")")
-    .call(d3.axisBottom(x));
+  add_x_axis(original_chart,x)
+  add_x_axis(trend_chart,x_trend)
+  add_x_axis(seasonal_chart,x_seasonal)
+  add_x_axis(residual_chart,x_residual)
 
   // Add the Y Axis
-  svg.append("g")
-    .attr("class", "y_axis")
-    .call(d3.axisLeft(y));
+  add_y_axis(original_chart,y)
+  add_y_axis(trend_chart,y_trend)
+  add_y_axis(seasonal_chart,y_seasonal)
+  add_y_axis(residual_chart,y_residual)
+
+  function add_clip(chartname){
+    return chartname.append("defs").append("clipPath")
+      .attr("id", "clip")
+      .append("rect")
+      .attr("width", width)
+      .attr("height", height);
+  }
+
+  // add clipPath
+  add_clip(original_chart)
+  add_clip(trend_chart)
+  add_clip(seasonal_chart)
+  add_clip(residual_chart)
+
 
   var data_to_plot = [];
-  var y_max = 0;
   var color = ["#377eb8","#4daf4a","#984ea3","#e41a1c","#ff7f00","#a65628"];
 
   // linedraw function
-  var line = d3.line()
-      .x(function(d) {return x(d.week);})
-      .y(function(d) {return y(d.relative_play);
+  var line_original = d3.line()
+      .x(function(d) {return x(d.date); })
+      .y(function(d) {return y(d.original);
+      });
+
+  var line_trend = d3.line()
+      .defined(function (d) { return d.trend !== null; })
+      .x(function(d) { return x_trend(d.date); })
+      .y(function(d) {return y_trend(d.trend);
+      });
+
+  var line_seasonal = d3.line()
+      .x(function(d) { return x_seasonal(d.date); })
+      .y(function(d) {return y_seasonal(d.seasonal);
+      });
+
+  var line_residual = d3.line()
+      .x(function(d) { return x_residual(d.date); })
+      .y(function(d) {return y_residual(d.residual);
       });
 
   // When user clicks show country button
@@ -200,71 +254,156 @@ var margin = {top: 50, right: 150, bottom: 50, left: 50}
     year = document.getElementById("year_select").value;
 
     d3.json("/data/data.json", function(data) {
+
+      // format the data
+      data.forEach(function(d) {
+          d.date = parseTime(d.date);
+      });
+
       data_filtered = data.filter(function (d) {
         return  d.country == country &&
-                d.genre == genre &&
-                d.year == year;
+                d.genre == genre
       });
 
       data_filtered_sorted = data_filtered.sort(function(a, b) {
-          return parseFloat(a.week) - parseFloat(b.week);
+          return a.date - b.date;
       });
 
+      y_max = -1000
+      y_min = 0
+
       if (y_max < d3.max(data_filtered, function(d) {
-	       return Math.max(d.relative_play); })){
+	       return Math.max(d.original); })){
 
            y_max = d3.max(data_filtered, function(d) {
-     	       return Math.max(d.relative_play); })
+     	       return Math.max(d.original); })
+      };
+
+      if (y_min > d3.min(data_filtered, function(d) {
+	       return Math.max(d.original); })){
+
+           y_min = d3.min(data_filtered, function(d) {
+     	       return Math.max(d.original); })
+      };
+
+      y_max_trend = -1000
+      y_min_trend = 0
+
+      if (y_max_trend < d3.max(data_filtered, function(d) {
+	       return Math.max(d.trend); })){
+
+           y_max_trend = d3.max(data_filtered, function(d) {
+     	       return Math.max(d.trend); })
+      };
+
+      if (y_min_trend > d3.min(data_filtered, function(d) {
+	       return Math.max(d.trend); })){
+
+           y_min_trend = d3.min(data_filtered, function(d) {
+     	       return Math.max(d.trend); })
+      };
+
+      y_max_seasonal = -1000
+      y_min_seasonal = 0
+
+      if (y_max_seasonal < d3.max(data_filtered, function(d) {
+	       return Math.max(d.seasonal); })){
+
+           y_max_seasonal = d3.max(data_filtered, function(d) {
+     	       return Math.max(d.seasonal); })
+      };
+
+      if (y_min_seasonal > d3.min(data_filtered, function(d) {
+	       return Math.max(d.seasonal); })){
+
+           y_min_seasonal = d3.min(data_filtered, function(d) {
+     	       return Math.max(d.seasonal); })
+      };
+
+      y_max_residual = -1000
+      y_min_residual = 0
+
+      if (y_max_residual < d3.max(data_filtered, function(d) {
+	       return Math.max(d.residual); })){
+
+           y_max_residual = d3.max(data_filtered, function(d) {
+     	       return Math.max(d.residual); })
+      };
+
+      if (y_min_residual > d3.min(data_filtered, function(d) {
+	       return Math.max(d.residual); })){
+
+           y_min_residual = d3.min(data_filtered, function(d) {
+     	       return Math.max(d.residual); })
       };
 
       data_to_plot.push(data_filtered_sorted);
-      plot_lines(data_to_plot);
-      hor_chart(data_to_plot);
+      plot_lines(data_to_plot, year);
 
     })
   };
 
-function plot_lines(data_to_plot){
+function plot_lines(data_to_plot, year){
+
+      // d3.extent(data_to_plot[0], function(d) { return d.date; })
 
       // change axis
-      x.domain([1,53])
-      y.domain([0,y_max]);
+      x.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
+      y.domain([y_min,y_max]);
 
-      svg.selectAll(".y_axis")
+      // change axis
+      x_trend.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
+      y_trend.domain([y_min_trend,y_max_trend]);
+
+      // change axis
+      x_seasonal.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
+      y_seasonal.domain([y_min_seasonal,y_max_seasonal]);
+
+      // change axis
+      x_residual.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
+      y_residual.domain([y_min_residual,y_max_residual]);
+
+ // ORIGINAL
+      original_chart.select(".y_axis")
         .call(d3.axisLeft(y));
 
+        // Add the X Axis
+      original_chart.select(".x_axis")
+        .call(d3.axisBottom(x));
+
       // Update lines
-      svg.selectAll(".pc_lines")
+      original_chart.selectAll(".pc_lines")
         .data(data_to_plot)
         .attr("stroke", function (d, i) { return color[i]; })
-        .attr("d", line);
+        .attr("d", line_original);
 
       // Enter lines
-      svg.selectAll(".pc_lines")
+      original_chart.selectAll(".pc_lines")
         .data(data_to_plot)
         .enter().append("path")
         .attr("class", "pc_lines")
         .style("fill", "none")
         .attr("stroke", function (d, i) { return color[i]; })
-        .attr("d", line);
+        .attr("d", line_original)
+        .attr("clip-path", "url(#clip)");;
 
       // Exit lines
-      svg.selectAll(".pc_lines")
+      original_chart.selectAll(".pc_lines")
         .data(data_to_plot)
         .exit().remove();
 
       // Update legend
-      svg.selectAll('.legend')
+      original_chart.selectAll('.legend')
         .data(data_to_plot)
         .attr('fill', function (d, i) { return color[i]; })
 
       // Enter legend
-      var legend = svg.selectAll('.legend')
+      var original_legend = original_chart.selectAll('.legend')
         .data(data_to_plot)
         .enter().append('g')
         .attr('class', 'legend');
 
-      legend.append('rect')
+      original_legend.append('rect')
         .attr('x', width)
         .attr('y', function(d, i) {
           return i * 20;
@@ -273,77 +412,214 @@ function plot_lines(data_to_plot){
         .attr('height', 10)
         .attr('fill', function (d, i) { return color[i]; })
         .on("click", function(d,i) {
-          console.log(i);
           data_to_plot.splice(i, 1);
-          plot_lines(data_to_plot);
+          plot_lines(data_to_plot, year);
         });
 
-      legend.append('text')
+      original_legend.append('text')
         .attr('x', width + 20)
         .attr('y', function(d, i) {return (i * 20) + 9;})
-        .text(function(d) {return (d[0].year + " - " + d[0].country + " - " + d[0].genre);})
+        .text(function(d) {return (d[0].country + " - " + d[0].genre);})
         .attr('fill', 'black')
         .attr("font-family", "sans-serif")
         .attr("font-size", "12px")
         .attr("fill", "black");
 
       // Exit legend
-      svg.selectAll('.legend')
+      original_chart.selectAll('.legend')
         .data(data_to_plot)
         .exit().remove();
+
+ // TREND
+      trend_chart.selectAll(".y_axis")
+        .call(d3.axisLeft(y_trend));
+
+        // Add the X Axis
+      trend_chart.selectAll(".x_axis")
+        .call(d3.axisBottom(x_trend));
+
+      // Update lines
+      trend_chart.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .attr("stroke", function (d, i) { return color[i]; })
+        .attr("d", line_trend);
+
+      // Enter lines
+      trend_chart.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .enter().append("path")
+        .attr("class", "pc_lines")
+        .style("fill", "none")
+        .attr("stroke", function (d, i) { return color[i]; })
+        .attr("d", line_trend)
+        .attr("clip-path", "url(#clip)");;
+
+      // Exit lines
+      trend_chart.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .exit().remove();
+
+      // Update legend
+      trend_chart.selectAll('.legend')
+        .data(data_to_plot)
+        .attr('fill', function (d, i) { return color[i]; })
+
+
+ // SEASONAL
+      seasonal_chart.selectAll(".y_axis")
+        .call(d3.axisLeft(y_seasonal));
+
+        // Add the X Axis
+      seasonal_chart.selectAll(".x_axis")
+        .call(d3.axisBottom(x_seasonal));
+
+      // Update lines
+      seasonal_chart.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .attr("stroke", function (d, i) { return color[i]; })
+        .attr("d", line_seasonal);
+
+      // Enter lines
+      seasonal_chart.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .enter().append("path")
+        .attr("class", "pc_lines")
+        .style("fill", "none")
+        .attr("stroke", function (d, i) { return color[i]; })
+        .attr("d", line_seasonal)
+        .attr("clip-path", "url(#clip)");;
+
+      // Exit lines
+      seasonal_chart.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .exit().remove();
+
+      // Update legend
+      seasonal_chart.selectAll('.legend')
+        .data(data_to_plot)
+        .attr('fill', function (d, i) { return color[i]; })
+
+
+ // RESIDUAL
+      residual_chart.selectAll(".y_axis")
+        .call(d3.axisLeft(y_residual));
+
+        // Add the X Axis
+      residual_chart.selectAll(".x_axis")
+        .call(d3.axisBottom(x_residual));
+
+      // Update lines
+      residual_chart.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .attr("stroke", function (d, i) { return color[i]; })
+        .attr("d", line_residual);
+
+      // Enter lines
+      residual_chart.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .enter().append("path")
+        .attr("class", "pc_lines")
+        .style("fill", "none")
+        .attr("stroke", function (d, i) { return color[i]; })
+        .attr("d", line_residual)
+        .attr("clip-path", "url(#clip)");;
+
+      // Exit lines
+      residual_chart.selectAll(".pc_lines")
+        .data(data_to_plot)
+        .exit().remove();
+
+      // Update legend
+      residual_chart.selectAll('.legend')
+        .data(data_to_plot)
+        .attr('fill', function (d, i) { return color[i]; })
+
     };
 
-    // Enter events
-    // When user clicks show country button
-    function show_events() {
+// Enter events
+function show_events() {
 
-      // get info
-      events = document.getElementById("event_select").value;
+  // get info
+  events = document.getElementById("event_select").value;
 
-    //
-    d3.csv("/data/events.csv", function(events_raw) {
-      console.log(events_raw[0]);
-      events_raw_filtered = events_raw.filter(function (d) {
-        return d.year == events;
-      });
+  d3.csv("/data/events.csv", function(events_raw) {
+    events_raw_filtered = events_raw.filter(function (d) {
+    return d.year == "2005";
+    });
 
-    // Update events
-    svg.selectAll(".event_lines")
+    // format the data
+    events_raw_filtered.forEach(function(d) {
+      d.date = parseTime(d.year+"-"+d.month+"-"+d.day);
+    });
+
+    function updateEvent(chartname, min, max){
+      return chartname.selectAll(".event_lines")
+        .data(events_raw_filtered)
+        .attr("x1", function (d) { return x(d.date); })
+        .attr("y1", y(min))
+        .attr("x2", function (d) { return x(d.date); })
+        .attr("y2", y(max));
+    };
+
+    function enterEvent(chartname, min, max){
+      chartname.selectAll(".event_lines")
+        .data(events_raw_filtered)
+        .enter().append("line")
+        .attr("class", "event_lines")
+        .style("fill", "none")
+        .style("stroke", "black")
+        .attr("x1", function (d) { return x(d.date); })
+        .attr("y1", y(min))
+        .attr("x2", function (d) { return x(d.date); })
+        .attr("y2", y(max));
+    };
+
+    function exitEvent(chartname){
+      chartname.selectAll(".event_lines")
+        .data(events_raw_filtered)
+        .exit().remove()
+    }
+
+    // Update event
+    updateEvent(original_chart, y_min, y_max)
+
+    chartname.selectAll(".event_lines")
       .data(events_raw_filtered)
-      .attr("x1", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
-      .attr("y1", y(0))
-      .attr("x2", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
-      .attr("y2", y(y_max));
+      .attr("x1", function (d) { return x(d.date); })
+      .attr("y1", y_residual(y_min_residual))
+      .attr("x2", function (d) { return x(d.date); })
+      .attr("y2", y_residual(y_max_residual));
 
     // Enter events
-    svg.selectAll(".event_lines")
+    enterEvent(original_chart, y_min, y_max)
+
+    residual_chart.selectAll(".event_lines")
       .data(events_raw_filtered)
       .enter().append("line")
       .attr("class", "event_lines")
       .style("fill", "none")
       .style("stroke", "black")
-      .attr("x1", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
-      .attr("y1", y(0))
-      .attr("x2", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
-      .attr("y2", y(y_max));
+      .attr("x1", function (d) { return x(d.date); })
+      .attr("y1", y_residual(y_min_residual))
+      .attr("x2", function (d) { return x(d.date); })
+      .attr("y2", y_residual(y_max_residual));
 
-    // Exit events
-    svg.selectAll(".event_lines")
-      .data(events_raw_filtered)
-      .exit().remove()
+    // exitEvent
+    exitEvent(original_chart)
+    exitEvent(residual_chart)
 
     // Update events
-    svg.selectAll(".event_text")
+    original_chart.selectAll(".event_text")
       .data(events_raw_filtered)
-      .attr("x", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
+      .attr("x", function (d) { return x(parseTime(d.year+"-"+d.month+"-"+d.day)); })
       .attr("y", y(y_max));
 
     // Enter events
-    svg.selectAll(".event_text")
+    original_chart.selectAll(".event_text")
       .data(events_raw_filtered)
       .enter().append("text")
       .attr("class", "event_text")
-      .attr("x", function (d) { return x(checkWeek(d.year+"-"+d.month+"-"+d.day)); })
+      .attr("x", function (d) { return x(parseTime(d.year+"-"+d.month+"-"+d.day)); })
       .attr("y", y(y_max))
       .text( function (d) { return d.description })
       .attr("font-family", "sans-serif")
@@ -351,7 +627,7 @@ function plot_lines(data_to_plot){
       .attr("fill", "grey");
 
     // Exit events
-    svg.selectAll(".event_text")
+    original_chart.selectAll(".event_text")
       .data(events_raw_filtered)
       .exit().remove()
     });
@@ -359,8 +635,10 @@ function plot_lines(data_to_plot){
     };
 </script>
 
-<script src="https://npmcdn.com/d3-horizon-chart/build/d3-horizon-chart.min.js"></script>
 
+
+<!--
+<script src="https://npmcdn.com/d3-horizon-chart/build/d3-horizon-chart.min.js"></script>
 <script>
 
 function hor_chart(line_list){
@@ -408,12 +686,7 @@ function hor_chart(line_list){
 
   }
 
-</script>
-
-<script>
-
-
-</script>
+</script> -->
 
 
 </body>
