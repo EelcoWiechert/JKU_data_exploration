@@ -92,6 +92,8 @@
     <option value="pop">Pop</option>
   </select>
 
+  <button type="button" onclick="show_countries();">Show</button>
+
   <select id="year_select">
     <option value=2005>2005</option>
     <option value=2006>2006</option>
@@ -107,7 +109,7 @@
     <option value=2016>2016</option>-->
   </select>
 
-  <button type="button" onclick="show_countries();">Show</button>
+  <button type="button" onclick="show_countries();">Select year</button>
 
 </div>
 
@@ -128,7 +130,7 @@
     <option value=2015>2015</option>
     <option value=2016>2016</option>-->
   </select>
-  <button type="button" onclick="show_events();">Show</button>
+  <button type="button" onclick="plot_lines();">Show</button>
 </div>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -251,7 +253,6 @@ var parseTime = d3.timeParse("%Y-%m-%d");
     // get info
     country = document.getElementById("country_select").value;
     genre = document.getElementById("genre_select").value;
-    year = document.getElementById("year_select").value;
 
     d3.json("/data/data.json", function(data) {
 
@@ -269,97 +270,46 @@ var parseTime = d3.timeParse("%Y-%m-%d");
           return a.date - b.date;
       });
 
-      y_max = -1000
-      y_min = 0
-
-      if (y_max < d3.max(data_filtered, function(d) {
-	       return Math.max(d.original); })){
-
-           y_max = d3.max(data_filtered, function(d) {
-     	       return Math.max(d.original); })
-      };
-
-      if (y_min > d3.min(data_filtered, function(d) {
-	       return Math.max(d.original); })){
-
-           y_min = d3.min(data_filtered, function(d) {
-     	       return Math.max(d.original); })
-      };
-
-      y_max_trend = -1000
-      y_min_trend = 0
-
-      if (y_max_trend < d3.max(data_filtered, function(d) {
-	       return Math.max(d.trend); })){
-
-           y_max_trend = d3.max(data_filtered, function(d) {
-     	       return Math.max(d.trend); })
-      };
-
-      if (y_min_trend > d3.min(data_filtered, function(d) {
-	       return Math.max(d.trend); })){
-
-           y_min_trend = d3.min(data_filtered, function(d) {
-     	       return Math.max(d.trend); })
-      };
-
-      y_max_seasonal = -1000
-      y_min_seasonal = 0
-
-      if (y_max_seasonal < d3.max(data_filtered, function(d) {
-	       return Math.max(d.seasonal); })){
-
-           y_max_seasonal = d3.max(data_filtered, function(d) {
-     	       return Math.max(d.seasonal); })
-      };
-
-      if (y_min_seasonal > d3.min(data_filtered, function(d) {
-	       return Math.max(d.seasonal); })){
-
-           y_min_seasonal = d3.min(data_filtered, function(d) {
-     	       return Math.max(d.seasonal); })
-      };
-
-      y_max_residual = -1000
-      y_min_residual = 0
-
-      if (y_max_residual < d3.max(data_filtered, function(d) {
-	       return Math.max(d.residual); })){
-
-           y_max_residual = d3.max(data_filtered, function(d) {
-     	       return Math.max(d.residual); })
-      };
-
-      if (y_min_residual > d3.min(data_filtered, function(d) {
-	       return Math.max(d.residual); })){
-
-           y_min_residual = d3.min(data_filtered, function(d) {
-     	       return Math.max(d.residual); })
-      };
-
       data_to_plot.push(data_filtered_sorted);
-      plot_lines(data_to_plot, year);
+      plot_lines(data_to_plot);
 
     })
   };
 
-function plot_lines(data_to_plot, year){
+function plot_lines(data_to_plot){
 
-      // d3.extent(data_to_plot[0], function(d) { return d.date; })
+      var y_max = y_max_trend = y_max_seasonal = y_max_residual = -1000;
+      var y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
+
+      var year = document.getElementById("year_select").value;
+
+      var extremes = data_to_plot.forEach(function(d) {
+
+        values = d3.extent(d, function(d) {
+          return [d.original, d.trend, d.seasonal, d.residual];
+        });
+
+        if (y_max < values[1][0]){y_max = values[1][0]};
+        if (y_min > values[0][0]){y_min = values[0][0]};
+
+        if (y_max_trend < values[1][1]){y_max_trend = values[1][1]};
+        if (y_min_trend > values[0][1]){y_min_trend = values[0][1]};
+
+        if (y_max_seasonal < values[1][2]){y_max_seasonal = values[1][2]};
+        if (y_min_seasonal > values[0][2]){y_min_seasonal = values[0][2]};
+
+        if (y_max_residual < values[1][3]){y_max_residual = values[1][3]};
+        if (y_min_residual > values[0][3]){y_min_residual = values[0][3]};
+
+      });
 
       // change axis
       x.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
       y.domain([y_min,y_max]);
-
-      // change axis
       x_trend.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
       y_trend.domain([y_min_trend,y_max_trend]);
-
-      // change axis
       x_seasonal.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
       y_seasonal.domain([y_min_seasonal,y_max_seasonal]);
-
-      // change axis
       x_residual.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
       y_residual.domain([y_min_residual,y_max_residual]);
 
