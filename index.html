@@ -4,49 +4,6 @@
 
 <body>
 
-<style>
-    body {
-        margin: 0;
-        padding: 0;
-    }
-
-    .horizon {
-        border-top: solid 1px #000;
-        border-bottom: solid 1px #000;
-        overflow: hidden;
-        position: relative;
-    }
-
-    .horizon + .horizon {
-        border-top: none;
-    }
-
-    .horizon canvas {
-        display: block;
-        image-rendering: pixelated;
-    }
-
-  .horizon .title,
-  .horizon .value {
-      bottom: 0;
-      line-height: 30px;
-      margin: 0 6px;
-      position: absolute;
-      font-family: sans-serif;
-      text-shadow: 0 1px 0 rgba(255,255,255,.5);
-      white-space: nowrap;
-  }
-
-  .horizon .title {
-      left: 0;
-  }
-
-  .horizon .value {
-      right: 0;
-  }
-
-</style>
-
 <div>
   <select id="country_select">
     <option value="UK">United Kingdom</option>
@@ -109,7 +66,7 @@
     <option value=2016>2016</option>-->
   </select>
 
-  <button type="button" onclick="show_countries();">Select year</button>
+  <button type="button" onclick="plot_lines(data_to_plot);">Select year</button>
 
 </div>
 
@@ -130,7 +87,7 @@
     <option value=2015>2015</option>
     <option value=2016>2016</option>-->
   </select>
-  <button type="button" onclick="plot_lines();">Show</button>
+  <button type="button" onclick="show_events(y_min, y_max);">Show</button>
 </div>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -138,11 +95,13 @@
 
 <script>
 
-var margin = {top: 10, right: 150, bottom: 20, left: 50}
+var margin = {top: 10, right: 170, bottom: 20, left: 50}
   , width = window.innerWidth - margin.left - margin.right // Use the window's width
   , height = (window.innerWidth/8) - margin.top - margin.bottom; // Use the window's height
 
 var parseTime = d3.timeParse("%Y-%m-%d");
+var y_max = y_max_trend = y_max_seasonal = y_max_residual = -1000;
+var y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
 
   // set the ranges
   var x = d3.scaleTime().range([0, width]);
@@ -278,8 +237,8 @@ var parseTime = d3.timeParse("%Y-%m-%d");
 
 function plot_lines(data_to_plot){
 
-      var y_max = y_max_trend = y_max_seasonal = y_max_residual = -1000;
-      var y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
+      y_max = y_max_trend = y_max_seasonal = y_max_residual = -1000;
+      y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
 
       var year = document.getElementById("year_select").value;
 
@@ -354,7 +313,7 @@ function plot_lines(data_to_plot){
         .attr('class', 'legend');
 
       original_legend.append('rect')
-        .attr('x', width)
+        .attr('x', width+10)
         .attr('y', function(d, i) {
           return i * 20;
         })
@@ -367,7 +326,7 @@ function plot_lines(data_to_plot){
         });
 
       original_legend.append('text')
-        .attr('x', width + 20)
+        .attr('x', width + 30)
         .attr('y', function(d, i) {return (i * 20) + 9;})
         .text(function(d) {return (d[0].country + " - " + d[0].genre);})
         .attr('fill', 'black')
@@ -487,7 +446,10 @@ function plot_lines(data_to_plot){
     };
 
 // Enter events
-function show_events() {
+function show_events(y_min, y_max) {
+
+  console.log(y_min);
+  console.log(y_max);
 
   // get info
   events = document.getElementById("event_select").value;
@@ -502,46 +464,34 @@ function show_events() {
       d.date = parseTime(d.year+"-"+d.month+"-"+d.day);
     });
 
-    function updateEvent(chartname, min, max){
-      return chartname.selectAll(".event_lines")
+    original_chart.selectAll(".event_lines")
         .data(events_raw_filtered)
         .attr("x1", function (d) { return x(d.date); })
-        .attr("y1", y(min))
+        .attr("y1", y(y_min))
         .attr("x2", function (d) { return x(d.date); })
-        .attr("y2", y(max));
-    };
+        .attr("y2", y(y_max));
 
-    function enterEvent(chartname, min, max){
-      chartname.selectAll(".event_lines")
+    original_chart.selectAll(".event_lines")
         .data(events_raw_filtered)
         .enter().append("line")
         .attr("class", "event_lines")
         .style("fill", "none")
         .style("stroke", "black")
         .attr("x1", function (d) { return x(d.date); })
-        .attr("y1", y(min))
+        .attr("y1", y(y_min))
         .attr("x2", function (d) { return x(d.date); })
-        .attr("y2", y(max));
-    };
+        .attr("y2", y(y_max));
 
-    function exitEvent(chartname){
-      chartname.selectAll(".event_lines")
+    original_chart.selectAll(".event_lines")
         .data(events_raw_filtered)
         .exit().remove()
-    }
 
-    // Update event
-    updateEvent(original_chart, y_min, y_max)
-
-    chartname.selectAll(".event_lines")
+    residual_chart.selectAll(".event_lines")
       .data(events_raw_filtered)
       .attr("x1", function (d) { return x(d.date); })
       .attr("y1", y_residual(y_min_residual))
       .attr("x2", function (d) { return x(d.date); })
       .attr("y2", y_residual(y_max_residual));
-
-    // Enter events
-    enterEvent(original_chart, y_min, y_max)
 
     residual_chart.selectAll(".event_lines")
       .data(events_raw_filtered)
@@ -553,10 +503,6 @@ function show_events() {
       .attr("y1", y_residual(y_min_residual))
       .attr("x2", function (d) { return x(d.date); })
       .attr("y2", y_residual(y_max_residual));
-
-    // exitEvent
-    exitEvent(original_chart)
-    exitEvent(residual_chart)
 
     // Update events
     original_chart.selectAll(".event_text")
