@@ -77,6 +77,8 @@
     <option value=popular>Popular</option>
     <option value=news>News</option>
     <option value=tech>Technology</option>
+    <option value="trending">Trending</option>
+
     <!--<option value=2008>2008</option>
     <option value=2009>2009</option>
     <option value=2010>2010</option>
@@ -106,7 +108,7 @@ var parseTime = d3.timeParse("%Y-%m-%d");
 var y_max = y_max_trend = y_max_seasonal = y_max_residual = -1000;
 var y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
 var x_min = parseTime("2005-01-01")
-var x_max = parseTime("2007-01-01")
+var x_max = parseTime("2007-12-31")
 
   // set the ranges
   var x = d3.scaleTime().range([0, width]);
@@ -246,9 +248,10 @@ var x_max = parseTime("2007-01-01")
 
       data_filtered = data.filter(function (d) {
         return  d.country == country &&
-                d.genre == genre &&
-                d.date > x_min &&
-                d.date < x_max });
+                d.genre == genre
+                //d.date > x_min &&
+                //d.date < x_max
+              });
 
       data_filtered_sorted = data_filtered.sort(function(a, b) {
           return a.date - b.date;
@@ -262,12 +265,9 @@ var x_max = parseTime("2007-01-01")
 
 function plot_lines(data_to_plot){
 
-  console.log(data_to_plot);
-
       y_max = y_max_trend = y_max_seasonal = y_max_residual = -1000;
       y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
 
-      var year = document.getElementById("year_select").value;
       var fyear = document.getElementById("fyear").value;
       var fmonth = document.getElementById("fmonth").value;
       var fday = document.getElementById("fday").value;
@@ -331,7 +331,7 @@ function plot_lines(data_to_plot){
         .style("fill", "none")
         .attr("stroke", function (d, i) { return color[i]; })
         .attr("d", line_original)
-        .attr("clip-path", "url(#clip)");;
+        .attr("clip-path", "url(#clip)");
 
       // Exit lines
       original_chart.selectAll(".pc_lines")
@@ -341,7 +341,6 @@ function plot_lines(data_to_plot){
       // Update legend
       original_chart.selectAll('.legend')
         .data(data_to_plot)
-        .attr('fill', function (d, i) { return color[i]; })
 
       // Enter legend
       var original_legend = original_chart.selectAll('.legend')
@@ -359,7 +358,7 @@ function plot_lines(data_to_plot){
         .attr('fill', function (d, i) { return color[i]; })
         .on("click", function(d,i) {
           data_to_plot.splice(i, 1);
-          plot_lines(data_to_plot, year);
+          plot_lines(data_to_plot);
         });
 
       original_legend.append('text')
@@ -480,6 +479,7 @@ function plot_lines(data_to_plot){
         .data(data_to_plot)
         .attr('fill', function (d, i) { return color[i]; })
 
+      show_events(y_min, y_max)
     };
 
 // Enter events
@@ -488,10 +488,20 @@ function show_events(y_min, y_max) {
   // get info
   events = document.getElementById("event_select").value;
 
+  // change axis
+  x.domain([x_min,x_max]);
+  y.domain([y_min,y_max]);
+  x_trend.domain([x_min,x_max]);
+  y_trend.domain([y_min_trend,y_max_trend]);
+  x_seasonal.domain([x_min,x_max]);
+  y_seasonal.domain([y_min_seasonal,y_max_seasonal]);
+  x_residual.domain([x_min,x_max]);
+  y_residual.domain([y_min_residual,y_max_residual]);
+
   d3.csv("/data/events.csv", function(events_raw) {
-    events_raw_filtered = events_raw.filter(function (d) {
-    return d.year == "2005";
-    });
+    events_raw_filtered = events_raw; //.filter(function (d) {
+    //return events_raw_filtered;
+    //});
 
     // format the data
     events_raw_filtered.forEach(function(d) {
@@ -503,7 +513,8 @@ function show_events(y_min, y_max) {
         .attr("x1", function (d) { return x(d.date); })
         .attr("y1", y(y_min))
         .attr("x2", function (d) { return x(d.date); })
-        .attr("y2", y(y_max));
+        .attr("y2", y(y_max))
+        .attr("clip-path", "url(#clip)");
 
     original_chart.selectAll(".event_lines")
         .data(events_raw_filtered)
@@ -514,7 +525,8 @@ function show_events(y_min, y_max) {
         .attr("x1", function (d) { return x(d.date); })
         .attr("y1", y(y_min))
         .attr("x2", function (d) { return x(d.date); })
-        .attr("y2", y(y_max));
+        .attr("y2", y(y_max))
+        .attr("clip-path", "url(#clip)");
 
     original_chart.selectAll(".event_lines")
         .data(events_raw_filtered)
@@ -536,7 +548,8 @@ function show_events(y_min, y_max) {
       .attr("x1", function (d) { return x(d.date); })
       .attr("y1", y_residual(y_min_residual))
       .attr("x2", function (d) { return x(d.date); })
-      .attr("y2", y_residual(y_max_residual));
+      .attr("y2", y_residual(y_max_residual))
+      .attr("clip-path", "url(#clip)");
 
     // Update events
     original_chart.selectAll(".event_text")
@@ -554,7 +567,8 @@ function show_events(y_min, y_max) {
       .text( function (d) { return d.description })
       .attr("font-family", "sans-serif")
       .attr("font-size", "6px")
-      .attr("fill", "grey");
+      .attr("fill", "grey")
+      .attr("clip-path", "url(#clip)");
 
     // Exit events
     original_chart.selectAll(".event_text")
