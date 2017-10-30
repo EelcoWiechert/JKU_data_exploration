@@ -51,11 +51,11 @@
 
   <button type="button" onclick="show_countries();">Show</button>
 
-  <select id="year_select">
+  <!--<select id="year_select">
     <option value=2005>2005</option>
     <option value=2006>2006</option>
     <option value=2007>2007</option>
-    <!--<option value=2008>2008</option>
+    <option value=2008>2008</option>
     <option value=2009>2009</option>
     <option value=2010>2010</option>
     <option value=2011>2011</option>
@@ -63,10 +63,10 @@
     <option value=2013>2013</option>
     <option value=2014>2014</option>
     <option value=2015>2015</option>
-    <option value=2016>2016</option>-->
+    <option value=2016>2016</option>
   </select>
 
-  <button type="button" onclick="plot_lines(data_to_plot);">Select year</button>
+  <button type="button" onclick="plot_lines(data_to_plot);">Select year</button>-->
 
 </div>
 
@@ -90,6 +90,9 @@
   <button type="button" onclick="show_events(y_min, y_max);">Show</button>
 </div>
 
+From (YYYY-MM-DD): <input type="number" id="fyear" value=2005><input type="text" id="fmonth" value=01><input type="text" id="fday" value=01><br>
+To (YYYY-MM-DD): <input type="text" id="tyear" value=2007><input type="text" id="tmonth" value=12><input type="text" id="tday" value=31>
+
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
 
@@ -102,6 +105,8 @@ var margin = {top: 10, right: 170, bottom: 20, left: 50}
 var parseTime = d3.timeParse("%Y-%m-%d");
 var y_max = y_max_trend = y_max_seasonal = y_max_residual = -1000;
 var y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
+var x_min = parseTime("2005-01-01")
+var x_max = parseTime("2007-01-01")
 
   // set the ranges
   var x = d3.scaleTime().range([0, width]);
@@ -166,6 +171,25 @@ var y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
   add_y_axis(seasonal_chart,y_seasonal)
   add_y_axis(residual_chart,y_residual)
 
+  function brushended() {
+  if (!d3.event.sourceEvent) return; // Only transition after input.
+  if (!d3.event.selection) return; // Ignore empty selections.
+  var d0 = d3.event.selection.map(x.invert),
+      d1 = d0.map(d3.timeDay.round);
+      x_min = d0[0];
+      x_max = d0[1];
+      plot_lines(data_to_plot)}
+
+
+  d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("class", "brush")
+      .call(d3.brushX()
+          .extent([[0, 0], [width, height]])
+          .on("end", brushended));
+
   function add_clip(chartname){
     return chartname.append("defs").append("clipPath")
       .attr("id", "clip")
@@ -222,8 +246,9 @@ var y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
 
       data_filtered = data.filter(function (d) {
         return  d.country == country &&
-                d.genre == genre
-      });
+                d.genre == genre &&
+                d.date > x_min &&
+                d.date < x_max });
 
       data_filtered_sorted = data_filtered.sort(function(a, b) {
           return a.date - b.date;
@@ -237,10 +262,19 @@ var y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
 
 function plot_lines(data_to_plot){
 
+  console.log(data_to_plot);
+
       y_max = y_max_trend = y_max_seasonal = y_max_residual = -1000;
       y_min = y_min_trend = y_min_seasonal = y_min_residual = 1000;
 
       var year = document.getElementById("year_select").value;
+      var fyear = document.getElementById("fyear").value;
+      var fmonth = document.getElementById("fmonth").value;
+      var fday = document.getElementById("fday").value;
+      var tyear = document.getElementById("tyear").value;
+      var tmonth = document.getElementById("tmonth").value;
+      var tday = document.getElementById("tday").value;
+
 
       var extremes = data_to_plot.forEach(function(d) {
 
@@ -262,14 +296,17 @@ function plot_lines(data_to_plot){
 
       });
 
+      x_min = parseTime(fyear + "-" + fmonth + "-" + fday)
+      x_max = parseTime(tyear + "-" + tmonth + "-" + tday)
+
       // change axis
-      x.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
+      x.domain([x_min,x_max]);
       y.domain([y_min,y_max]);
-      x_trend.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
+      x_trend.domain([x_min,x_max]);
       y_trend.domain([y_min_trend,y_max_trend]);
-      x_seasonal.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
+      x_seasonal.domain([x_min,x_max]);
       y_seasonal.domain([y_min_seasonal,y_max_seasonal]);
-      x_residual.domain([parseTime(year + "-01-01"),parseTime(year + "-12-31")]);
+      x_residual.domain([x_min,x_max]);
       y_residual.domain([y_min_residual,y_max_residual]);
 
  // ORIGINAL
@@ -448,9 +485,6 @@ function plot_lines(data_to_plot){
 // Enter events
 function show_events(y_min, y_max) {
 
-  console.log(y_min);
-  console.log(y_max);
-
   // get info
   events = document.getElementById("event_select").value;
 
@@ -531,34 +565,30 @@ function show_events(y_min, y_max) {
     };
 </script>
 
-
-
 <!--
 <script src="https://npmcdn.com/d3-horizon-chart/build/d3-horizon-chart.min.js"></script>
 <script>
 
 function hor_chart(line_list){
 
+  console.log(line_list);
+
   var series =[]
 
   // generate some random data
   line_list.forEach(function(serie) {
-
-
 
     var temp_list = [];
 
     // generate some random data
     serie.forEach(function(d, i) {
 
-      for (var j = 0; j<16; j++) {
-        temp_list.push(d.relative_play); // only positive values
-      };
+        temp_list.push(parseFloat(d.original)); // only positive values
 
     });
 
-    var list = {year:serie[0].year, genre:serie[0].genre, country:serie[0].country, data:temp_list};
-
+    var list = {genre:serie[0].genre, country:serie[0].country, data:temp_list};
+    console.log(temp_list);
     series.push(list)
 
   });
@@ -575,7 +605,7 @@ function hor_chart(line_list){
         .each(function(d, i) {
             horizonChart.colors(colors)
                 .height(40)
-                .title(d.year + ' - ' + d.genre + ' - ' + d.country)
+                .title(d.genre + ' - ' + d.country)
                 .call(this, d.data);
         });
 
