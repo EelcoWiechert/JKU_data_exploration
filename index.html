@@ -5,7 +5,7 @@
 <body>
 
 <div>
-  Show event labels: <input type="checkbox" id="vehicle" value="Bike"><br>
+  Show event labels: <input type="checkbox" onclick="show_events(y_min, y_max)" id="vehicle" value="Bike"><br>
 
   <select id="country_select">
     <option value="UK">United Kingdom</option>
@@ -57,10 +57,10 @@
 
 <div>
   Line colors:
-  <font color="#377eb8">Original</font> -
-  <font color="#4daf4a">Trend</font> -
-  <font color="#984ea3">Seasonal</font> -
-  <font color="#ff7f00">Residuals</font>
+  <font color="#377eb8"> ---------- Original</font> -
+  <font color="#4daf4a"> ---------- Trend</font> -
+  <font color="#984ea3"> ---------- Seasonal</font> -
+  <font color="#ff7f00"> ---------- Residuals</font>
 
 </div>
 
@@ -82,6 +82,7 @@
 }
 
 </style>
+
 <svg width="960" height="500"></svg>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
@@ -466,8 +467,12 @@ function show_events(y_min, y_max) {
           .duration(750)
           .style("stroke-opacity", 0.5);
 
+    console.log(document.getElementById("vehicle").checked);
+
 
     if (document.getElementById("vehicle").checked){
+
+      console.log('yes');
 
       // Update events
       focus.selectAll(".event_text")
@@ -482,15 +487,16 @@ function show_events(y_min, y_max) {
         .attr("class", "event_text")
         .attr("x", function (d) { return x(d.date); })
         .attr("y", y(0))
-        .text( function (d) { return d.description })
+        .text( function (d) { return d.description + ' - ' + d.category})
         .attr("font-family", "sans-serif")
-        .attr("font-size", "10px")
+        .attr("font-size", "8px")
         .attr("fill", "black")
         .attr("clip-path", "url(#clip)");
     } else {
+      console.log('no');
       // Exit events
       focus.selectAll(".event_text")
-        .exit().remove()
+        .remove()
     }
 
 
