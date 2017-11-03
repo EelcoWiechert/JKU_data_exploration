@@ -6,7 +6,7 @@
 
 <div>
   Show event labels: <input type="checkbox" id="vehicle" value="Bike"><br>
-  
+
   <select id="country_select">
     <option value="UK">United Kingdom</option>
     <option value="PL">Poland</option>
@@ -54,6 +54,16 @@
   <button type="button" onclick="show_countries();">Show</button>
 
 </div>
+
+<div>
+  Line colors:
+  <font color="#377eb8">Original</font> -
+  <font color="#4daf4a">Trend</font> -
+  <font color="#984ea3">Seasonal</font> -
+  <font color="#ff7f00">Residuals</font>
+
+</div>
+
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
@@ -251,7 +261,7 @@ function plot_lines(data_to_plot) {
     .transition()
       .delay(750)
       .duration(5)
-      .style("stroke-opacity", 0.5);
+      .style("stroke-opacity", 1);
 
   focus.selectAll(".pc_lines")
     .data(data_to_plot)
@@ -272,9 +282,9 @@ function plot_lines(data_to_plot) {
     .attr("class", "trend_lines")
     .style("fill", "none")
     .attr("d", line_trend)
-    .style("stroke-dasharray", ("20, 3"))
     .attr("stroke", color[1])
     .attr("clip-path", "url(#clip)")
+    .attr("stroke-width", 0.8)
     .style("stroke-opacity", 0.0)
     .transition()
       .delay(1500)
@@ -302,7 +312,7 @@ function plot_lines(data_to_plot) {
     .attr("d", line_residual)
     .attr("stroke", color[4])
     .attr("clip-path", "url(#clip)")
-    .attr("stroke-width", 1.5)
+    .attr("stroke-width", 0.8)
     .style("stroke-opacity", 0.0)
     .transition()
       .delay(2000)
@@ -331,7 +341,7 @@ function plot_lines(data_to_plot) {
     .style("stroke-opacity", 1)
     .attr("stroke", color[2])
     .attr("clip-path", "url(#clip)")
-    .attr("stroke-width", 1.5)
+    .attr("stroke-width", 0.8)
     .style("stroke-opacity", 0.0)
     .transition()
       .delay(2500)
@@ -474,8 +484,8 @@ function show_events(y_min, y_max) {
         .attr("y", y(0))
         .text( function (d) { return d.description })
         .attr("font-family", "sans-serif")
-        .attr("font-size", "6px")
-        .attr("fill", "grey")
+        .attr("font-size", "10px")
+        .attr("fill", "black")
         .attr("clip-path", "url(#clip)");
     } else {
       // Exit events
